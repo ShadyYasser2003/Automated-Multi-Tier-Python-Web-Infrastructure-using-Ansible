@@ -1,0 +1,64 @@
+---
+# tasks file for app
+
+- name: Ensure destination directory exists
+  file:
+    path: "{{ app_dir }}"
+    state: directory
+    owner: vagrant
+    group: vagrant
+    mode: '0755'
+
+- name: Upload entire project folder
+  copy:
+    src: "{{ app_name }}/"
+    dest: "{{ app_dir }}/"
+    owner: vagrant
+    group: vagrant
+    mode: '0755'
+
+- name: Ensure python3-venv is installed
+  apt:
+    name: python3-venv
+    state: present
+    update_cache: yes
+  become: true
+  tags: install
+
+- name: Create virtual environment
+  command: python3 -m venv {{ venv_dir }}
+  args:
+    creates: "{{ venv_dir }}/bin/activate"
+
+- name: Ensure pip is upgraded in venv
+  command: "{{ venv_dir }}/bin/pip install --upgrade pip"
+  environment:
+    PATH: "{{ venv_dir }}/bin:{{ ansible_env.PATH }}"
+
+- name: Install Gunicorn in venv
+  command: "{{ venv_dir }}/bin/pip install gunicorn"
+  environment:
+    PATH: "{{ venv_dir }}/bin:{{ ansible_env.PATH }}"
+
+- name: Install project dependencies using venv pip
+  command: "{{ venv_dir }}/bin/pip install -r {{ app_dir }}/requirements.txt"
+  args:
+    chdir: "{{ app_dir }}"
+  environment:
+    PATH: "{{ venv_dir }}/bin:{{ ansible_env.PATH }}"
+
+- name: Copy Gunicorn systemd service
+  template:
+    src: gunicorn.service.j2
+    dest: "/etc/systemd/system/{{ app_name }}.service"
+    mode: '0644'
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start flask service
+  systemd:
+    name: "{{ app_name }}"
+    enabled: yes
+    state: started

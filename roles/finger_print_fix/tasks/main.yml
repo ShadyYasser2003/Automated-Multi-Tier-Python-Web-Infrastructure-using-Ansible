@@ -1,0 +1,21 @@
+---
+# tasks file for finger_print_fix
+- name: Add new SSH fingerprint to known_hosts
+  ansible.builtin.shell: 
+   {{ inventory_hostname }}
+  delegate_to: localhost
+  ignore_errors: true
+  changed_when: false
+
+- name: Add new SSH fingerprint to known_hosts
+  ansible.builtin.known_hosts:
+    name: "{{ inventory_hostname }}"
+    key: "{{ lookup('pipe', 'ssh-keyscan -H ' + inventory_hostname) }}"
+    path: "~/.ssh/known_hosts"
+  delegate_to: localhost
+  
+# حذف البصمة القديمة من known_hosts (لو موجودة).#
+
+# جلب البصمة الجديدة باستخدام ssh-keyscan.#
+
+# إضافتها تلقائيًا لـ ~/.ssh/known_hosts على جهاز الـ host (اللي عليه أنسيبل).#

@@ -1,0 +1,50 @@
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Ensure frontend directory exists
+  file:
+    path: "{{ frontend_dest }}"
+    state: directory
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  become: true
+
+- name: Copy frontend files to server
+  copy:
+    src: "{{ item }}"
+    dest: "{{ frontend_dest }}/"
+    owner: www-data
+    group: www-data
+    mode: '0644'
+  loop: 
+    - "index.html"
+    - "style.css"
+    - "script.js"
+  become: true
+
+- name: Remove default site config if exists
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+  ignore_errors: true
+  become: true
+
+- name: Deploy Nginx site config
+  copy:
+    src: "{{ nginx_config_src }}"
+    dest: "{{ nginx_config_dest }}"
+    owner: root
+    group: root
+    mode: '0644'
+  become: true
+
+- name: Reload Nginx to apply changes
+  systemd:
+    name: nginx
+    state: reloaded
+  become: true

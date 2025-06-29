@@ -1,0 +1,7 @@
+---
+# vars file for db
+db_root_password: "rootpass123"
+db_name: "flaskdb"
+db_user: "flaskuser"
+db_password: "flaskpass123"
+secure_mysql: true

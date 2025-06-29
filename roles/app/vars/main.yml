@@ -1,0 +1,6 @@
+---
+# vars file for app
+app_name: flaskapp   # اسم المشروع (هيستخدم في مجلد واسم الخدمة)
+app_entry: app           # اسم الملف بدون .py
+app_dir: "/opt/{{ app_name }}"
+venv_dir: "{{ app_dir }}/venv"

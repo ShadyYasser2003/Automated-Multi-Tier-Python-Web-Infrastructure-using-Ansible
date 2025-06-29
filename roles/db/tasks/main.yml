@@ -1,0 +1,107 @@
+- name: Ensure critical directories exist
+  file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - { path: '/var/run/mysqld', owner: 'mysql', group: 'mysql', mode: '0755' }
+    - { path: '/var/log/mysql', owner: 'mysql', group: 'mysql', mode: '0750' }
+  tags: prep
+
+- name: Install MySQL Server with safe defaults
+  apt:
+    name: mysql-server
+    state: latest
+    update_cache: yes
+    install_recommends: no
+  tags: install
+
+- name: Install Python MySQL driver
+  apt:
+    name: python3-pymysql
+    state: present
+  tags: install
+
+- name: Start MySQL service temporarily
+  service:
+    name: mysql
+    state: started
+    enabled: no
+  tags: init
+
+- name: Set root password (safe method)
+  mysql_user:
+    name: root
+    host: localhost
+    password: "{{ db_root_password }}"
+    plugin: mysql_native_password
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    check_implicit_admin: yes
+  tags: init
+
+- name: Apply MySQL security hardening (when enabled)
+  block:
+    - name: Remove anonymous users
+      mysql_user:
+        name: ''
+        host: all
+        state: absent
+        login_user: root
+        login_password: "{{ db_root_password }}"
+
+    - name: Disable remote root login
+      mysql_user:
+        name: root
+        host: "%"
+        state: absent
+        login_user: root
+        login_password: "{{ db_root_password }}"
+
+    - name: Remove test database
+      mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: "{{ db_root_password }}"
+  when: secure_mysql
+  tags: security
+
+- name: Create application database
+  mysql_db:
+    name: "{{ db_name }}"
+    state: present
+    encoding: utf8mb4
+    collation: utf8mb4_unicode_ci
+    login_user: root
+    login_password: "{{ db_root_password }}"
+  tags: setup
+
+- name: Create restricted DB user
+  mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    priv: "{{ db_name }}.*:ALL"
+    host: "%"
+    state: present
+    login_user: root
+    login_password: "{{ db_root_password }}"
+  tags: setup
+
+- name: Final service restart
+  service:
+    name: mysql
+    state: restarted
+    enabled: yes
+  tags: final
+
+- name: Verify database accessibility
+  mysql_query:
+    login_user: "{{ db_user }}"
+    login_password: "{{ db_password }}"
+    query: "SELECT 1"
+  register: db_check
+  failed_when: db_check.failed
+  changed_when: false
+  tags: verify

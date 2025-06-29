@@ -1,0 +1,22 @@
+---
+- name: Ensure backup directory exists
+  file:
+    path: /opt/db_backups
+    state: directory
+    owner: vagrant
+    group: vagrant
+    mode: '0755'
+
+- name: Upload backup script
+  copy:
+    src: backup_script.sh
+    dest: /usr/local/bin/backup_db.sh
+    mode: '0755'
+
+- name: Schedule daily database backup at 2am
+  cron:
+    name: "Daily DB backup"
+    user: vagrant
+    job: "/usr/local/bin/backup_db.sh"
+    minute: "0"
+    hour: "2"

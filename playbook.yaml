@@ -1,0 +1,13 @@
+- name: Setup DB Server
+  hosts: db
+  become: true
+  roles:
+    - backup
+    - monitoring
+# - name: Setup app 
+#   hosts: web
+#   become: true
+#   vars:
+#     ansible_python_interpreter: "/usr/bin/python3"
+#   roles:
+#     - frontend

@@ -1,0 +1,21 @@
+<!doctype html>
+<html>
+<head>
+  <title>Vote App</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <h1>Vote for Cats or Dogs!</h1>
+  <form action="/vote" method="post">
+    <button type="submit" name="vote" value="cat">Cat</button>
+    <button type="submit" name="vote" value="dog">Dog</button>
+  </form>
+
+  <h2>Results</h2>
+  <ul>
+    {% for option, count in votes.items() %}
+      <li>{{ option }}: {{ count }}</li>
+    {% endfor %}
+  </ul>
+</body>
+</html>

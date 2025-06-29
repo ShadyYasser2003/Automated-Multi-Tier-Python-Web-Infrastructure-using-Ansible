@@ -1,0 +1,5 @@
+frontend_src: frontend/
+frontend_dest: /var/www/frontend
+nginx_config_src: voteapp.conf
+nginx_config_dest: /etc/nginx/conf.d/voteapp.conf
+backend_api_ip: 192.168.59.12
